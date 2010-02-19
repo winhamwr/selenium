@@ -1,0 +1,5 @@
+namespace :websites do
+  task :addons do
+    cp_r ".", "/var/www/domains/seleniumhq.org/addons/htdocs"
+  end
+end
