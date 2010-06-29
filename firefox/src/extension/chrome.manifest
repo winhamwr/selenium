@@ -1,5 +1,0 @@
-resource fxdriver resource/
-
-content fxdriver content/  xpcnativewrappers=yes
-
-overlay chrome://browser/content/browser.xul chrome://fxdriver/content/fxdriver.xul
