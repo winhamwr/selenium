@@ -1,8 +1,8 @@
 import datetime
 import time
 import unittest
-from selenium.common_tests import utils
-from selenium.common_tests.utils import require_online
+from selenium.common.test import utils
+from selenium.common.test.utils import require_online
 
 
 class CookieTest(unittest.TestCase):

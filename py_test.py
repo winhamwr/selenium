@@ -41,19 +41,26 @@ if __name__ == "__main__":
 
     driver_tests_dict = {
       'chrome': ['api_examples'],
-      'firefox': ['api_examples', 'cookie_tests', 'firefox_launcher_tests'],
+      'firefox': [
+          'test_ff_api',
+          'test_ff_cookie',
+          'test_ff_launcher',
+          'profile_tests'],
       'remote': ['api_examples'],
     }
 
     base_dir = os.path.abspath(os.path.dirname(__file__))
     print 'base_dir:',base_dir
     os.environ["WEBDRIVER"] = base_dir
-    os.environ["PYTHONPATH"] = os.pathsep.join([os.environ.get("PYTHONPATH", ""),
-                                             os.path.join(base_dir, "../../../", "firefox", "lib-src"),
-                                             os.path.join(base_dir, '..')])
     try:
         for test in driver_tests_dict[options.driver]:
-            process = run_script(os.path.join(base_dir, "%s_tests/%s.py" % (options.driver, test)))
+            process = run_script(
+                os.path.join(
+                    base_dir,
+                    'selenium',
+                    options.driver,
+                    "test",
+                    "%s.py" % test))
             assert process.wait() == 0, "Test %s failed" % test
     finally:
         try:

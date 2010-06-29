@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from selenium.firefox.webdriver import WebDriver
-from selenium.common_tests import cookie_tests
+from selenium.common.test import cookie_tests
 from selenium.common.webserver import SimpleWebServer
 
 

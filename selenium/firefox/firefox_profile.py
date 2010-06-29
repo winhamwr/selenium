@@ -26,7 +26,7 @@ import utils
 
 DEFAULT_PORT = 7055
 ANONYMOUS_PROFILE_NAME = "WEBDRIVER_ANONYMOUS_PROFILE"
-        
+
 
 def get_profile_ini():
     app_data_dir = utils.get_firefox_app_data_dir()
@@ -52,7 +52,7 @@ class FirefoxProfile(object):
             extension_path: the source of the webdriver extension
 
         Usage:
-            -- Get a profile with a given name: 
+            -- Get a profile with a given name:
                profile = FirefoxProfile("profile_name")
 
             -- Get a new created profile:
@@ -89,7 +89,7 @@ class FirefoxProfile(object):
     def _copy_profile_source(self, source_path):
         """Copy the profile content from source_path source_path.
         """
-        logging.info("Copying profile from '%s' to '%s'" 
+        logging.info("Copying profile from '%s' to '%s'"
                      % (source_path, self.path))
         try:
             shutil.rmtree(self.path)
@@ -97,20 +97,20 @@ class FirefoxProfile(object):
             self._launch_in_silent()
         except OSError, err:
             raise Exception("Errors in copying profile: %s" % err)
-        
-    def add_extension(self, force_create=True, extension_zip_path=None): 
+
+    def add_extension(self, force_create=True, extension_zip_path=None):
         """Adds the webdriver extension to this profile.
 
-           If force_create is True, the fxdriver extension is updated if a 
+           If force_create is True, the fxdriver extension is updated if a
            new version is accessable. The old extension is untouched if the
-           new version is unavailable, but it might be deleted if the new 
+           new version is unavailable, but it might be deleted if the new
            version is accessable but the upgrade fails.
 
-           If force_create is False, nothing will happen if the extension 
+           If force_create is False, nothing will happen if the extension
            directory exists and otherwise a new extension will be installed.
 
            The sources of a new extension are (in the order of preference)
-           (1) zipped file webdriver-extension.zip in the current directory, 
+           (1) zipped file webdriver-extension.zip in the current directory,
                which can be created using 'rake firefox_xpi' in
                %webdriver_directory%, and
            (2) zipped files pointed by extension_zip_path, and
@@ -119,14 +119,14 @@ class FirefoxProfile(object):
                see %webdriver_directory%/firefox/prebuilt, or run
                'rake firefox_xpi' and use the built files generated in
                %webdriver_directory%/build
-           
-           Default value of force_create is True. This enables users to 
+
+           Default value of force_create is True. This enables users to
            install new extension by attaching new extension as specified; if
            no files is specified, no installation will be performed even when
            force_creat is True.
         """
 
-        extension_dir = os.path.join(self.path, 
+        extension_dir = os.path.join(self.path,
                                      "extensions", "fxdriver@googlecode.com")
         logging.debug("extension_dir : %s" % extension_dir)
 
@@ -144,27 +144,27 @@ class FirefoxProfile(object):
                 webdriver_dir = os.getenv("WEBDRIVER")
                 if webdriver_dir is not None:
                     extension_source_path = os.path.join(
-                        webdriver_dir, "firefox", "src", "extension")
+                        webdriver_dir, 'selenium', "firefox", 'webdriver.xpi')
 
-            if (extension_source_path is None or 
+            if (extension_source_path is None or
                 not os.path.exists(extension_source_path)):
                 raise Exception(
                     "No extension found at %s" % extension_source_path)
 
             logging.debug("extension_source_path : %s" % extension_source_path)
-            logging.info("Copying extenstion from '%s' to '%s'" 
+            logging.info("Copying extenstion from '%s' to '%s'"
                 % (extension_source_path, extension_dir))
             try:
                 if os.path.exists(extension_dir):
-                    shutil.rmtree(extension_dir) 
+                    shutil.rmtree(extension_dir)
                 else:
                     #copytree()'s behavior on linux makes me to write these
-                    #two lines to ensure that the parent directory exists, 
+                    #two lines to ensure that the parent directory exists,
                     #although it is not required according to the documentation.
                     os.makedirs(extension_dir)
-                    shutil.rmtree(extension_dir) 
+                    shutil.rmtree(extension_dir)
                 shutil.copytree(extension_source_path, extension_dir)
-                logging.info("Extenstion has been copied from '%s' to '%s'" 
+                logging.info("Extenstion has been copied from '%s' to '%s'"
                     % (extension_source_path, extension_dir))
             except OSError, err:
                 logging.info("Fail to install firefox extension. %s" % err)
@@ -224,7 +224,7 @@ class FirefoxProfile(object):
             return
         logging.info("deleting %s" % self.path)
         shutil.rmtree(self.path)
-        
+
     def _get_ini_section(self):
         for section in self.profile_ini.sections():
             try:
@@ -233,7 +233,7 @@ class FirefoxProfile(object):
             except ConfigParser.NoOptionError:
                 pass
         return None
-        
+
     @staticmethod
     def _get_webdriver_prefs():
         """Gets the preferences required by webdriver."""

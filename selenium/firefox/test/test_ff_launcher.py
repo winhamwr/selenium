@@ -22,8 +22,8 @@ from selenium.firefox.webdriver import WebDriver
 class FirefoxLauncherTests (unittest.TestCase):
 
     def testLaunchAndCloseBrowser(self):
-         self.webdriver = WebDriver()
-         self.webdriver.quit()
+        self.webdriver = WebDriver()
+        self.webdriver.quit()
 
     def testDoubleClose(self):
         self.webdriver = WebDriver()

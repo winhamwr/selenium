@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from selenium.firefox.webdriver import WebDriver
-from selenium.common_tests import api_examples
+from selenium.common.test import api_examples
 from selenium.common.webserver import SimpleWebServer
 
 

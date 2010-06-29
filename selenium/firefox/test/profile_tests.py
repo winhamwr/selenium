@@ -22,7 +22,7 @@ import time
 import unittest
 from selenium.firefox.webdriver import WebDriver
 from selenium.common.webserver import SimpleWebServer
-from selenium.common_tests import utils
+from selenium.common.test import utils
 from selenium.firefox.firefox_profile import FirefoxProfile
 
 WEB_SERVER_PORT = 8000

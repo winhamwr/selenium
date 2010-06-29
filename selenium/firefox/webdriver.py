@@ -15,15 +15,16 @@
 
 import base64
 import httplib
+import urllib2
+
 from selenium.common.exceptions import ErrorInResponseException
 from selenium.remote.command import Command
 from selenium.remote.webdriver import WebDriver as RemoteWebDriver
-from webelement import WebElement
-from firefoxlauncher import FirefoxLauncher
-from firefox_profile import FirefoxProfile
-from extensionconnection import ExtensionConnection
-import urllib2
 
+from selenium.firefox.webelement import WebElement
+from selenium.firefox.firefoxlauncher import FirefoxLauncher
+from selenium.firefox.firefox_profile import FirefoxProfile
+from selenium.firefox.extensionconnection import ExtensionConnection
 
 class WebDriver(RemoteWebDriver):
     """The main interface to use for testing,
