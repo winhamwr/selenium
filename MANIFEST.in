@@ -1,6 +1,7 @@
 include COPYING
 include CREDITS.txt
 include MANIFEST.in
+include README.rst
 include py_test.py
 recursive-include test_media *.js *.gif *.html *.cs *.xhtml *.txt *.Config
 recursive-include selenium *.py
