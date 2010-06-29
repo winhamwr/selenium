@@ -1,5 +1,0 @@
-java_library(name = "jmock",
-  deps = [
-    "jmock-2.4.0.jar",
-    "jmock-junit3-2.4.0.jar"
-  ])

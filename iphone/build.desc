@@ -1,4 +1,0 @@
-java_library(name = "iphone",
-  srcs = ["src/java/**/*.java"],
-  deps = ["//remote/client"]
-  )
