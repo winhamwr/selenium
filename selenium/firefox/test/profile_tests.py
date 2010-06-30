@@ -59,11 +59,11 @@ class ProfileTests(unittest.TestCase):
         self.assertEquals([], driver.get_cookies())
         driver.quit()
 
-    def testCopyFromSource(self):
+    def testCopyProfileSource(self):
         dir_name = tempfile.mkdtemp()
         self._create_dummy_file(dir_name)
         profile = FirefoxProfile()
-        profile.copy_profile_source(dir_name)
+        profile._copy_profile_source(dir_name)
         profile_dir = profile.path
         dst_pref_file = open(os.path.join(profile_dir, self.DUMMY_FILE_NAME))
         content = dst_pref_file.read()

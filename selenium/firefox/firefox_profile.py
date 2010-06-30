@@ -87,7 +87,12 @@ class FirefoxProfile(object):
         self.add_extension(True, extension_zip_path=self.extension_path)
 
     def _copy_profile_source(self, source_path):
-        """Copy the profile content from source_path source_path.
+        """
+        Copy the profile content from ``source_path`` to this ``FirefoxProfile``s
+        profile directory, deleting the current profile first. Also launches
+        FireFox afterwards to ensure that the profile doesn't throw errors.
+        ``source_path`` Path to the profile directory to be copied in as the new
+        profile
         """
         logging.info("Copying profile from '%s' to '%s'"
                      % (source_path, self.path))
