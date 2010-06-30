@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2008-2009 WebDriver committers
 # Copyright 2008-2009 Google Inc.
 #
@@ -14,12 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 from os.path import dirname, join
+import codecs
 import re
 import sys
+
+import selenium
 
 def setup_python3():
     # Taken from "distribute" setup.py
@@ -47,71 +51,27 @@ def setup_python3():
 
     return tmp_src
 
-
-def find_longdesc():
-    for path in ("docs/api/py/index.rst", "docs/index.rst"):
-        try:
-            index = join(dirname(__file__), path)
-            return open(index).read()
-        except IOError:
-            pass
-
-    print("WARNING: Can't find index.rst")
-    return ""
-
-def revision():
-    svn_rev = "$Revision$"
-    match = re.search("\d+", svn_rev)
-    return match and match.group() or "unknown"
-
 if sys.version_info >= (3,):
     src_root = setup_python3()
 else:
     src_root = "."
 
+long_description = codecs.open("README.rst", "r", "utf-8").read()
+
 setup(
     cmdclass={'install': install},
     name='selenium',
-    version="2.0-dev-%s" % revision(),
-    description='Python bindings for Selenium',
-    long_description=find_longdesc(),
-    url='http://code.google.com/p/selenium/',
-    src_root=src_root,
-    package_dir={
-        'selenium':'.',
-        'selenium.ie': 'jobbie/src/py',
-        'selenium.firefox': 'firefox/src/py',
-        'selenium.chrome' : 'chrome/src/py',
-        'selenium.chrome_tests': 'chrome/test/py',
-        'selenium.common': 'common/src/py',
-        'selenium.docs': 'docs/api/py',
-        'selenium.remote': 'remote/client/src/py',
-        'selenium.common_tests': 'common/test/py',
-        'selenium.common_web': 'common/src/web',
-        'selenium.firefox_tests': 'firefox/test/py',
-        'selenium.ie_tests': 'jobbie/test/py',
-        'selenium.remote_tests': 'remote/client/test/py',
-        'selenium.selenium': 'selenium/src/py',
-    },
-    packages=['selenium',
-              'selenium.common',
-              'selenium.docs',
-              'selenium.firefox',
-              'selenium.ie',
-              'selenium.chrome',
-              'selenium.remote',
-              'selenium.common_tests',
-              'selenium.common_web',
-              'selenium.firefox_tests',
-              'selenium.ie_tests',
-              'selenium.chrome_tests',
-              'selenium.remote_tests',
-              'selenium.selenium'],
-
+    version=selenium.__version__,
+    description=selenium.__doc__,
+    url=selenium.__homepage__,
+    platforms=["any"],
+    license="Apache",
+    packages=find_packages(),
+    scripts=[],
     include_package_data=True,
     install_requires=['distribute'],
     zip_safe=False,
-
+    long_description=long_description,
 )
 
 # FIXME: Do manually
