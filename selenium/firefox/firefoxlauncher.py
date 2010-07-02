@@ -49,8 +49,7 @@ class FirefoxLauncher(object):
         while not self.extension_connection.is_connectable():
             attempts += 1
             if attempts >  MAX_START_ATTEMPTS:
-                raise RuntimeError("Unablet to start firefox")
-            self._start_from_profile_path(profile.path)
+                raise RuntimeError("Unable to start firefox")
             time.sleep(1)
 
     def _lock_file_exists(self):
@@ -64,6 +63,7 @@ class FirefoxLauncher(object):
         try:
             if self.process:
                 os.kill(self.process.pid, 9)
+                os.waitpid(self.process.pid, 0)
         except AttributeError:
             # kill may not be available under windows environment
             pass
