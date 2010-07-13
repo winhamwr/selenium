@@ -37,8 +37,9 @@ from os.path import expanduser, join, dirname, abspath, isdir, isfile
 from sys import platform
 from tempfile import mkdtemp
 from shutil import copytree, rmtree, copy
-from os import environ, kill
+from os import environ, kill, mkdir
 from signal import SIGKILL
+from simplejson import dumps
 
 INITIAL_HTML = '''
 <html>
@@ -194,6 +195,26 @@ def create_profile_dir():
     path = mkdtemp()
     touch(join(path, "First Run"))
     touch(join(path, "First Run Dev"))
+
+    # Add some default preferences to disable some messages
+    default_dir = mkdir(join(path, 'Default'))
+    preferences_path = join(path, 'Default', 'Preferences')
+    touch(preferences_path)
+
+    prefs = {
+        'autofill': { # Disable form autofill
+            'enabled': False,
+            'infobar_shown': False,
+        },
+        'profile': {
+            'password_manager_enabled': False,
+        },
+    }
+
+    prefs_json = dumps(prefs)
+    with open(preferences_path, 'w') as preferences_f:
+        preferences_f.write(prefs_json)
+
     return path
 
 # FIXME: Find a free one dinamically
