@@ -37,7 +37,8 @@ from os.path import expanduser, join, dirname, abspath, isdir, isfile
 from sys import platform
 from tempfile import mkdtemp
 from shutil import copytree, rmtree, copy
-from os import environ
+from os import environ, kill
+from signal import SIGKILL
 
 INITIAL_HTML = '''
 <html>
@@ -249,13 +250,9 @@ class ChromeDriver:
 
     def stop(self):
         if self._chrome:
-            try:
-                self._chrome.kill()
-                self._chrome.wait()
-                self._chrome = None
-            except AttributeError:
-                # POpen.kill is a python 2.6 API...
-                pass
+            kill(self._chrome.pid, SIGKILL)
+            self._chrome.wait()
+            self._chrome = None
 
         if self._server:
             self._server.server_close()
