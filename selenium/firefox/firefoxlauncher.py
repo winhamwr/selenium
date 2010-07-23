@@ -18,6 +18,7 @@ installing the extension"""
 
 
 from subprocess import Popen
+import signal
 import logging
 import time
 import os
@@ -62,11 +63,15 @@ class FirefoxLauncher(object):
         """
         try:
             if self.process:
-                os.kill(self.process.pid, 9)
+                os.kill(self.process.pid, signal.SIGKILL)
                 os.waitpid(self.process.pid, 0)
         except AttributeError:
             # kill may not be available under windows environment
             pass
+
+        while self.extension_connection.is_connectable():
+            self.extension_connection.connect_and_quit()
+            time.sleep(1)
 
     def _start_from_profile_path(self, path):
         os.environ["XRE_PROFILE_PATH"] = path

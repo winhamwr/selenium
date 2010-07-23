@@ -74,11 +74,11 @@ class WebDriver(RemoteWebDriver):
     def quit(self):
         """Quits the driver and close every associated window."""
         try:
-          RemoteWebDriver.quit(self)
+            RemoteWebDriver.quit(self)
         except httplib.BadStatusLine:
-          # Happens if Firefox shutsdown before we've read the response from
-          # the socket.
-          pass
+            # Happens if Firefox shutsdown before we've read the response from
+            # the socket.
+            pass
         self.browser.kill()
 
     def save_screenshot(self, png_file):
