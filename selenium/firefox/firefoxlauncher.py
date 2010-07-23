@@ -22,6 +22,7 @@ import signal
 import logging
 import time
 import os
+import sys
 from extensionconnection import ExtensionConnection
 import utils
 
@@ -69,9 +70,14 @@ class FirefoxLauncher(object):
             # kill may not be available under windows environment
             pass
 
+        attempts = 0
+        max_attempts = 20
         while self.extension_connection.is_connectable():
             self.extension_connection.connect_and_quit()
             time.sleep(1)
+            attempts += 1
+            if attempts > max_attempts:
+                raise Exception("Timed out attempting to kill the browser")
 
     def _start_from_profile_path(self, path):
         os.environ["XRE_PROFILE_PATH"] = path
