@@ -68,7 +68,6 @@ setup(
     license="Apache",
     packages=find_packages(),
     scripts=[],
-    url='http://code.google.com/p/selenium/',
     package_data = {
         'selenium.firefox' : ['*.xpi'],
         'selenium.chrome' : ['*.zip'],
