@@ -148,10 +148,14 @@ class WebElement(object):
         Returns:
           The command's JSON response loaded into a dictionary object.
         """
-        if not params:
-            params = {}
-        params['id'] = self._id
-        return self._parent._execute(command, params)
+        from urllib2 import URLError
+        try:
+            if not params:
+                params = {}
+            params['id'] = self._id
+            return self._parent._execute(command, params)
+        except URLError:
+            return self._parent._execute(command, params)
 
     def _get_elem_by(self, by, value):
         return self._execute(Command.FIND_CHILD_ELEMENT,
