@@ -16,9 +16,11 @@
 import logging
 import string
 import urllib2
+import base64
 
 from command import Command
 import utils
+import re
 
 
 class Request(urllib2.Request):
@@ -36,6 +38,7 @@ class Request(urllib2.Request):
         elif method != 'POST' and method != 'PUT':
             data = None
         self._method = method
+
         urllib2.Request.__init__(self, url, data=data)
 
     def get_method(self):
@@ -220,11 +223,20 @@ class RemoteConnection(object):
         """
         logging.debug('%s %s %s' % (method, url, data))
 
-        request = Request(url, data=data, method=method)
-        request.add_header('Accept', 'application/json')
+        regex = r'http://(.*):(.*)@(.*)'
+        if len(re.findall(regex, url)):
+            username, password, path = re.findall(regex, url)[0]
+            request = Request('http://%s' % path, data=data, method=method)
 
+            auth = base64.encodestring('%s:%s' % (username, password))[:-1]
+            request.add_header('Authorization', 'Basic %s' % auth)
+        else:
+            request = Request(url, data=data, method=method)
+        request.add_header('Accept', 'application/json')
         opener = urllib2.build_opener(urllib2.HTTPRedirectHandler(),
-                                      HttpErrorHandler())
+                                      urllib2.HTTPBasicAuthHandler(),
+                                      HttpErrorHandler()
+                                      )
         response = opener.open(request)
         try:
             if response.code > 399 and response.code < 500:
