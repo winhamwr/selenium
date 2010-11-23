@@ -92,7 +92,7 @@ _copy_ext_file("firefox", "webdriver.xpi")
 # FIXME: We need to find a solution for x64, currently IMO the zip contains the
 # Win32 dll
 _copy_ext_file("chrome", "chrome-extension.zip")
-_copy_ie_dlls()
+#_copy_ie_dlls()
 
 setup(
     cmdclass={'install': install},
