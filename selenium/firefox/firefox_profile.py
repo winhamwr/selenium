@@ -263,6 +263,7 @@ class FirefoxProfile(object):
         "startup.homepage_welcome_url": "\"about:blank\"",
         "javascript.options.showInConsole": "true",
         "browser.dom.window.dump.enabled": "true",
+        "network.manage-offline-status" : "false",
     }
 
     @staticmethod
