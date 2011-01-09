@@ -26,7 +26,7 @@ import utils
 
 DEFAULT_PORT = 7055
 ANONYMOUS_PROFILE_NAME = "WEBDRIVER_ANONYMOUS_PROFILE"
-
+LOGGER = logging.getLogger(__name__)
 
 def get_profile_ini():
     app_data_dir = utils.get_firefox_app_data_dir()
@@ -42,7 +42,6 @@ class FirefoxProfile(object):
     def __init__(self, name=ANONYMOUS_PROFILE_NAME, port=DEFAULT_PORT,
                  template_profile=None, extension_path=None):
         """Creates a FirefoxProfile.
-
         Args:
             name: the profile name. A new firefox profile is created if the one
                   specified doesn't exist.
@@ -54,20 +53,18 @@ class FirefoxProfile(object):
         Usage:
             -- Get a profile with a given name:
                profile = FirefoxProfile("profile_name")
-
             -- Get a new created profile:
                profile = FirefoxProfile()
-
             -- Get a new created profile with content copied from "/some/path":
                profile = FirefoxProfile(template_profile="/some/path")
         """
         self.name = name
         self.port = port
         if (extension_path is None):
-            self.extension_path = os.path.join(os.path.dirname(__file__), 'webdriver.xpi')
+            self.extension_path = os.path.join(
+            os.path.dirname(__file__), 'webdriver.xpi')
         else:
             self.extension_path = extension_path
-
         if name == ANONYMOUS_PROFILE_NAME:
             self._create_anonymous_profile(template_profile)
             self._refresh_ini()
@@ -87,14 +84,8 @@ class FirefoxProfile(object):
         self.add_extension(True, extension_zip_path=self.extension_path)
 
     def _copy_profile_source(self, source_path):
-        """
-        Copy the profile content from ``source_path`` to this ``FirefoxProfile``s
-        profile directory, deleting the current profile first. Also launches
-        FireFox afterwards to ensure that the profile doesn't throw errors.
-        ``source_path`` Path to the profile directory to be copied in as the new
-        profile
-        """
-        logging.info("Copying profile from '%s' to '%s'"
+        """Copy the profile content from source_path source_path."""
+        LOGGER.info("Copying profile from '%s' to '%s'"
                      % (source_path, self.path))
         try:
             shutil.rmtree(self.path)
@@ -133,7 +124,7 @@ class FirefoxProfile(object):
 
         extension_dir = os.path.join(self.path,
                                      "extensions", "fxdriver@googlecode.com")
-        logging.debug("extension_dir : %s" % extension_dir)
+        LOGGER.debug("extension_dir : %s" % extension_dir)
 
         if force_create or not os.path.exists(extension_dir):
             extension_source_path = utils.unzip_to_temp_dir(
@@ -149,15 +140,15 @@ class FirefoxProfile(object):
                 webdriver_dir = os.getenv("WEBDRIVER")
                 if webdriver_dir is not None:
                     extension_source_path = os.path.join(
-                        webdriver_dir, 'selenium', "firefox", 'webdriver.xpi')
+                        webdriver_dir, "firefox", "src", "extension")
 
             if (extension_source_path is None or
                 not os.path.exists(extension_source_path)):
                 raise Exception(
                     "No extension found at %s" % extension_source_path)
 
-            logging.debug("extension_source_path : %s" % extension_source_path)
-            logging.info("Copying extenstion from '%s' to '%s'"
+            LOGGER.debug("extension_source_path : %s" % extension_source_path)
+            LOGGER.info("Copying extension from '%s' to '%s'"
                 % (extension_source_path, extension_dir))
             try:
                 if os.path.exists(extension_dir):
@@ -165,17 +156,17 @@ class FirefoxProfile(object):
                 else:
                     #copytree()'s behavior on linux makes me to write these
                     #two lines to ensure that the parent directory exists,
-                    #although it is not required according to the documentation.
+                    #although it is not required according to the documentation
                     os.makedirs(extension_dir)
                     shutil.rmtree(extension_dir)
                 shutil.copytree(extension_source_path, extension_dir)
-                logging.info("Extenstion has been copied from '%s' to '%s'"
+                LOGGER.info("Extenstion has been copied from '%s' to '%s'"
                     % (extension_source_path, extension_dir))
             except OSError, err:
-                logging.info("Fail to install firefox extension. %s" % err)
+                LOGGER.info("Fail to install firefox extension. %s" % err)
 
         else:
-            logging.info("No extension installation required.")
+            LOGGER.info("No extension installation required.")
 
     def remove_lock_file(self):
         for lock_file in [".parentlock", "lock", "parent.lock"]:
@@ -183,6 +174,7 @@ class FirefoxProfile(object):
                 os.remove(os.path.join(self.path, lock_file))
             except OSError:
                 pass
+
     @property
     def path(self):
         if "anonymous_profile_dir" in self.__dict__:
@@ -200,11 +192,10 @@ class FirefoxProfile(object):
         os.environ["XRE_PROFILE_PATH"] = self.anonymous_profile_dir
         subprocess.Popen([utils.get_firefox_start_cmd(), "-silent"]).wait()
 
-    def _update_user_preference(self):
+    def _update_user_preference(self, pref=None):
         """Updates the user.js with the configurations needed by webdriver."""
-        preference = {}
-        user_pref_file_name = os.path.join(
-            self.path, "user.js")
+        preference = self._get_webdriver_prefs()
+        user_pref_file_name = os.path.join(self.path, "user.js")
         try:
             user_pref_file = open(user_pref_file_name)
             for line in user_pref_file:
@@ -212,22 +203,23 @@ class FirefoxProfile(object):
                 if match:
                     preference[match.group(1)] = match.group(2)
         except IOError:
-            logging.debug("user.js doesn't exist, creating one...")
-        preference.update(self._get_webdriver_prefs())
+            LOGGER.debug("user.js doesn't exist, creating one...")
+        #preference.update(self._get_webdriver_prefs())
+        if pref:
+            preference.update(pref)
         preference["webdriver.firefox_port"] = self.port
         user_pref_file = open(user_pref_file_name, "w")
         for key, value in preference.items():
             user_pref_file.write('user_pref("%s", %s);\n' % (key, value))
         user_pref_file.close()
-
-        logging.info('user_pref after update:')
-        logging.info(preference)
+        LOGGER.info('user_pref after update:')
+        LOGGER.info(preference)
 
     def _delete_profile_if_exist(self):
         section = self._get_ini_section()
         if not section:
             return
-        logging.info("deleting %s" % self.path)
+        LOGGER.info("deleting %s" % self.path)
         shutil.rmtree(self.path)
 
     def _get_ini_section(self):
@@ -239,39 +231,41 @@ class FirefoxProfile(object):
                 pass
         return None
 
+    prefs = {
+        "app.update.auto": "false",
+        "app.update.enabled": "false",
+        "browser.download.manager.showWhenStarting": "false",
+        "browser.EULA.override": "true",
+        "browser.EULA.3.accepted": "true",
+        "browser.link.open_external": "2",
+        "browser.link.open_newwindow": "2",
+        "browser.safebrowsing.enabled": "false",
+        "browser.search.update": "false",
+        "browser.sessionstore.resume_from_crash": "false",
+        "browser.shell.checkDefaultBrowser": "false",
+        "browser.startup.page": "0",
+        "browser.tabs.warnOnClose": "false",
+        "browser.tabs.warnOnOpen": "false",
+        "dom.disable_open_during_load": "false",
+        "extensions.update.enabled": "false",
+        "extensions.update.notifyUser": "false",
+        "security.warn_entering_secure": "false",
+        "security.warn_submit_insecure": "false",
+        "security.warn_entering_secure.show_once": "false",
+        "security.warn_entering_weak": "false",
+        "security.warn_entering_weak.show_once": "false",
+        "security.warn_leaving_secure": "false",
+        "security.warn_leaving_secure.show_once": "false",
+        "security.warn_submit_insecure": "false",
+        "security.warn_viewing_mixed": "false",
+        "security.warn_viewing_mixed.show_once": "false",
+        "signon.rememberSignons": "false",
+        "startup.homepage_welcome_url": "\"about:blank\"",
+        "javascript.options.showInConsole": "true",
+        "browser.dom.window.dump.enabled": "true",
+    }
+
     @staticmethod
     def _get_webdriver_prefs():
         """Gets the preferences required by webdriver."""
-        return {"app.update.auto": "false",
-                "app.update.enabled": "false",
-                "browser.download.manager.showWhenStarting": "false",
-                "browser.EULA.override": "true",
-                "browser.EULA.3.accepted": "true",
-                "browser.link.open_external": "2",
-                "browser.link.open_newwindow": "2",
-                "browser.safebrowsing.enabled": "false",
-                "browser.search.update": "false",
-                "browser.sessionstore.resume_from_crash": "false",
-                "browser.shell.checkDefaultBrowser": "false",
-                "browser.startup.page": "0",
-                "browser.tabs.warnOnClose": "false",
-                "browser.tabs.warnOnOpen": "false",
-                "dom.disable_open_during_load": "false",
-                "extensions.update.enabled": "false",
-                "extensions.update.notifyUser": "false",
-                "security.warn_entering_secure": "false",
-                "security.warn_submit_insecure": "false",
-                "security.warn_entering_secure.show_once": "false",
-                "security.warn_entering_weak": "false",
-                "security.warn_entering_weak.show_once": "false",
-                "security.warn_leaving_secure": "false",
-                "security.warn_leaving_secure.show_once": "false",
-                "security.warn_submit_insecure": "false",
-                "security.warn_viewing_mixed": "false",
-                "security.warn_viewing_mixed.show_once": "false",
-                "signon.rememberSignons": "false",
-                "startup.homepage_welcome_url": "\"about:blank\"",
-                "javascript.options.showInConsole": "true",
-                "browser.dom.window.dump.enabled": "true" ,
-                "network.manage-offline-status": "false" ,
-                }
+        return FirefoxProfile.prefs
