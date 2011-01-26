@@ -1,5 +1,0 @@
-
-java_library(name = "android",
-  deps = [
-    "android-8.jar"
-  ])
