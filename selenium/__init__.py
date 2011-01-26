@@ -15,6 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Python drivers for Selenium 2"""
+
+VERSION = (2, 0, 7, 'a')
+
+__version__ = ".".join(map(str, VERSION[:-1]))
+__release__ = ".".join(map(str, VERSION))
+__author__ = "Selenium Contributors"
+__contact__ = "wes@policystat.com"
+__homepage__ = "http://code.google.com/p/selenium/"
 
 def connect(driver_name, server_address='http://127.0.0.1:4444', browser_name='', version='', platform='ANY', javascript_enabled=True):
     """Usage:
