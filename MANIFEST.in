@@ -1,17 +1,3 @@
-<<<<<<< HEAD:MANIFEST.in
-include COPYING
-include CREDITS.txt
-include MANIFEST.in
-include README.rst
-include py_test.py
-recursive-include test_media *.js *.gif *.html *.cs *.xhtml *.txt *.Config
-recursive-include selenium *.py *.zip *.xpi
-recursive-include jobbie/src/py *.py *.dll
-recursive-include docs *
-prune docs/*.pyc
-prune docs/.build
-prune selenium/*.pyc
-=======
 prune *
 recursive-include common/src/web *.dll *.js *.gif *.html *.cs *.xhtml
 recursive-include common/src/web *.txt *.Config
@@ -30,5 +16,3 @@ include py/selenium/__init__.py
 include __init__.py
 include docs/api/py/index.rst
 recursive-include selenium.egg-info *
-
->>>>>>> upstream/trunk:MANIFEST.in

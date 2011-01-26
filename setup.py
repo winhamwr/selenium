@@ -106,26 +106,6 @@ setup(
     url='http://code.google.com/p/selenium/',
     src_root=src_root,
     package_dir={
-<<<<<<< HEAD:setup.py
-        'selenium':'.',
-        'selenium.ie': 'selenium/ie',
-        'selenium.firefox': 'selenium/firefox',
-        'selenium.chrome' : 'selenium/chrome',
-        'selenium.common': 'selenium/common',
-        'selenium.remote': 'selenium/remote',
-        'selenium.selenium': 'selenium/src/py',
-    },
-    packages=['selenium',
-              'selenium.common',
-              'selenium.firefox',
-              'selenium.ie',
-              'selenium.chrome',
-              'selenium.remote',
-              'selenium.selenium'],
-    package_data = {
-        'selenium.firefox':['*.xpi'],
-        'selenium.ie': ['*.dll'],
-=======
         'selenium': 'py/selenium',
         'selenium.test': 'py/test',
         'selenium.test.selenium': 'py/test/selenium',
@@ -161,7 +141,6 @@ setup(
         'selenium.webdriver.firefox': ['*.xpi'],
         'selenium.webdriver.ie': ['*.dll'],
         'selenium.webdriver.chrome': ['*.zip'],
->>>>>>> upstream/trunk:setup.py
     },
     include_package_data=True,
     install_requires=['distribute'],
