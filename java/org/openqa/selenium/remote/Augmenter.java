@@ -1,0 +1,226 @@
+/*
+Copyright 2007-2010 WebDriver committers
+Copyright 2007-2010 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package org.openqa.selenium.remote;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.browserlaunchers.CapabilityType;
+import org.openqa.selenium.remote.html5.AddApplicationCache;
+import org.openqa.selenium.remote.html5.AddBrowserConnection;
+import org.openqa.selenium.remote.html5.AddDatabaseStorage;
+import org.openqa.selenium.remote.html5.AddLocationContext;
+import org.openqa.selenium.remote.html5.AddWebStorage;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Enhance the interfaces implemented by an instance of the
+ * {@link org.openqa.selenium.remote.RemoteWebDriver} based on the returned
+ * {@link org.openqa.selenium.Capabilities} of the driver.
+ *
+ * Note: this class is still experimental. Use at your own risk.
+ */
+public class Augmenter {
+  private final Map<String, AugmenterProvider> driverAugmentors = Maps.newHashMap();
+  private final Map<String, AugmenterProvider> elementAugmentors = Maps.newHashMap();
+
+  public Augmenter() {
+    addDriverAugmentation(CapabilityType.SUPPORTS_FINDING_BY_CSS, new AddFindsByCss());
+    addDriverAugmentation(CapabilityType.TAKES_SCREENSHOT, new AddTakesScreenshot());
+    addDriverAugmentation(CapabilityType.SUPPORTS_SQL_DATABASE, new AddDatabaseStorage());
+    addDriverAugmentation(CapabilityType.SUPPORTS_LOCATION_CONTEXT, new AddLocationContext());
+    addDriverAugmentation(CapabilityType.SUPPORTS_APPLICATION_CACHE, new AddApplicationCache());
+    addDriverAugmentation(CapabilityType.SUPPORTS_BROWSER_CONNECTION, new AddBrowserConnection());
+    addDriverAugmentation(CapabilityType.SUPPORTS_WEB_STORAGE, new AddWebStorage());
+    addDriverAugmentation(CapabilityType.ROTATABLE, new AddRotatable());
+
+    addElementAugmentation(CapabilityType.SUPPORTS_FINDING_BY_CSS, new AddFindsChildByCss());
+  }
+
+  /**
+   * Add a mapping between a capability name and the implementation of the
+   * interface that name represents for instances of
+   * {@link org.openqa.selenium.WebDriver}. For example
+   * (@link CapabilityType#TAKES_SCREENSHOT} is represents the interface
+   * {@link org.openqa.selenium.TakesScreenshot}, which is implemented via the
+   * {@link org.openqa.selenium.remote.AddTakesScreenshot} provider.
+   *
+   * Note: This method is still experimental. Use at your own risk.
+   *
+   * @param capabilityName The name of the capability to model
+   * @param handlerClass The provider of the interface and implementation
+   */
+  public void addDriverAugmentation(String capabilityName, AugmenterProvider handlerClass) {
+    driverAugmentors.put(capabilityName, handlerClass);
+  }
+
+  /**
+   * Add a mapping between a capability name and the implementation of the
+   * interface that name represents for instances of
+   * {@link org.openqa.selenium.WebElement}. For example
+   * (@link CapabilityType#TAKES_SCREENSHOT} is represents the interface
+   * {@link org.openqa.selenium.internal.FindsByCssSelector}, which is
+   * implemented via the {@link AddFindsByCss} provider.
+   *
+   * Note: This method is still experimental. Use at your own risk.
+   *
+   * @param capabilityName The name of the capability to model
+   * @param handlerClass The provider of the interface and implementation
+   */
+  public void addElementAugmentation(String capabilityName, AugmenterProvider handlerClass) {
+    elementAugmentors.put(capabilityName, handlerClass);
+  }
+
+
+  /**
+   * Enhance the interfaces implemented by this instance of WebDriver iff that
+   * instance is a {@link org.openqa.selenium.remote.RemoteWebDriver}.
+   *
+   * The WebDriver that is returned may well be a dynamic proxy. You cannot
+   * rely on the concrete implementing class to remain constant.
+   *
+   * @param driver The driver to enhance
+   * @return A class implementing the described interfaces.
+   */
+  public WebDriver augment(WebDriver driver) {
+    // TODO(simon): We should really add a "SelfDescribing" interface for this
+    if (!(driver instanceof RemoteWebDriver)) {
+      return driver;
+    }
+
+    Map<String, AugmenterProvider> augmentors = driverAugmentors;
+
+    CompoundHandler handler = determineAugmentation(driver, augmentors);
+    RemoteWebDriver remote = create(handler, (RemoteWebDriver) driver);
+
+    remote.setCommandExecutor(((RemoteWebDriver) driver).getCommandExecutor());
+    remote.setElementConverter(((RemoteWebDriver) driver).getElementConverter());
+
+    return remote;
+  }
+
+  /**
+   * Enhance the interfaces implemented by this instance of WebElement iff that
+   * instance is a {@link org.openqa.selenium.remote.RemoteWebElement}.
+   *
+   * The WebElement that is returned may well be a dynamic proxy. You cannot
+   * rely on the concrete implementing class to remain constant.
+   *
+   * @param element The driver to enhance.
+   * @return A class implementing the described interfaces.
+   */
+  public WebElement augment(RemoteWebElement element) {
+    // TODO(simon): We should really add a "SelfDescribing" interface for this
+    RemoteWebDriver parent = (RemoteWebDriver) element.getWrappedDriver();
+    if (parent == null) {
+      return element;
+    }
+    Map<String, AugmenterProvider> augmentors = elementAugmentors;
+
+    CompoundHandler handler = determineAugmentation(parent, augmentors);
+    RemoteWebElement remote = create(handler, element);
+
+    remote.setId(element.getId());
+    remote.setParent(parent);
+
+    return remote;
+  }
+
+  private CompoundHandler determineAugmentation(WebDriver driver, Map<String, AugmenterProvider> augmentors) {
+    Map<String, ?> capabilities = ((RemoteWebDriver) driver).getCapabilities().asMap();
+
+    CompoundHandler handler = new CompoundHandler((RemoteWebDriver) driver);
+
+    for (Map.Entry<String, ?> capablityName : capabilities.entrySet()) {
+      AugmenterProvider augmenter = augmentors.get(capablityName.getKey());
+      if (augmenter == null) {
+        continue;
+      }
+
+      Object value = capablityName.getValue();
+      if (value instanceof Boolean && !((Boolean) value).booleanValue()) {
+        continue;
+      }
+
+      handler.addCapabilityHander(augmenter.getDescribedInterface(),
+          augmenter.getImplementation(value));
+    }
+    return handler;
+  }
+
+  protected <X> X create(CompoundHandler handler, X from) {
+    if (handler.isNeedingApplication()) {
+      Enhancer enhancer = new Enhancer();
+      enhancer.setCallback(handler);
+      enhancer.setSuperclass(from.getClass());
+
+      Set<Class<?>> interfaces = Sets.newHashSet();
+      interfaces.addAll(handler.getInterfaces());
+      enhancer.setInterfaces(interfaces.toArray(new Class<?>[interfaces.size()]));
+
+      return (X) enhancer.create();
+    }
+
+    return from;
+  }
+
+  private class CompoundHandler implements MethodInterceptor {
+    private Map<Method, InterfaceImplementation> handlers =
+        new HashMap<Method, InterfaceImplementation>();
+    private Set<Class<?>> interfaces = new HashSet<Class<?>>();
+    private final RemoteWebDriver driver;
+
+    private CompoundHandler(RemoteWebDriver driver) {
+      this.driver = driver;
+    }
+
+    public void addCapabilityHander(Class<?> fromInterface, InterfaceImplementation handledBy) {
+      interfaces.add(fromInterface);
+      for (Method method : fromInterface.getDeclaredMethods()) {
+          handlers.put(method, handledBy);
+      }
+    }
+
+    public Set<Class<?>> getInterfaces() {
+      return interfaces;
+    }
+
+    public boolean isNeedingApplication() {
+      return interfaces.size() > 0;
+    }
+
+    public Object intercept(Object self, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+      InterfaceImplementation handler = handlers.get(method);
+
+      if (handler == null) {
+        return methodProxy.invokeSuper(self, args);
+      }
+
+      return handler.invoke(new ExecuteMethod(driver), self, method, args);
+    }
+  }
+}

@@ -1,0 +1,34 @@
+<<<<<<< HEAD:MANIFEST.in
+include COPYING
+include CREDITS.txt
+include MANIFEST.in
+include README.rst
+include py_test.py
+recursive-include test_media *.js *.gif *.html *.cs *.xhtml *.txt *.Config
+recursive-include selenium *.py *.zip *.xpi
+recursive-include jobbie/src/py *.py *.dll
+recursive-include docs *
+prune docs/*.pyc
+prune docs/.build
+prune selenium/*.pyc
+=======
+prune *
+recursive-include common/src/web *.dll *.js *.gif *.html *.cs *.xhtml
+recursive-include common/src/web *.txt *.Config
+recursive-include py/selenium/webdriver/common *.py
+recursive-include py/test/selenium/webdriver/common *.py
+recursive-include py/selenium/webdriver/chrome *.py *.zip
+recursive-include py/test/selenium/webdiver/chrome *.py
+recursive-include py/selenium/webdriver/firefox *.py *.xpi
+recursive-include py/test/selenium/webdriver/firefox *.py
+recursive-include py/selenium/webdriver/ie *.py *.dll
+recursive-include py/test/selenium/webdriver/ie *.py
+recursive-include py/selenium/webdriver/remote *.py
+recursive-include py/test/selenium/webdriver/remote *.py
+include py/selenium/selenium.py
+include py/selenium/__init__.py
+include __init__.py
+include docs/api/py/index.rst
+recursive-include selenium.egg-info *
+
+>>>>>>> upstream/trunk:MANIFEST.in
