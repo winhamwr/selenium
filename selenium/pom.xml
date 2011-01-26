@@ -19,6 +19,15 @@
 			<artifactId>junit</artifactId>
 			<version>4.8.1</version>
 			<scope>compile</scope>
+			<optional>true</optional>
+		</dependency>
+		<!-- We need TestNG to compile SeleneseTestNgHelper ... --> 
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>5.14.1</version>
+			<scope>compile</scope>
+			<optional>true</optional>
 		</dependency>
 		<!-- Runtime dependencies ... -->
 		<dependency>
@@ -94,7 +103,7 @@
 						<configuration>
 							<tasks>
 								<!-- 1. Execute rake to build ../build/selenium/selenium.jar ... -->
-								<condition property="goExecutable" value="go.bat" else="go">
+								<condition property="goExecutable" value="go.bat" else="./go">
 									<os family="windows" />
 								</condition>
 								<exec dir=".." executable="${goExecutable}">
@@ -120,7 +129,7 @@
 						<configuration>
 							<tasks>
 								<!-- 1. Execute rake to build ../build/selenium/test.jar ... -->
-								<condition property="goExecutable" value="go.bat" else="go">
+								<condition property="goExecutable" value="go.bat" else="./go">
 									<os family="windows" />
 								</condition>
 								<exec dir=".." executable="${goExecutable}">
