@@ -14,8 +14,8 @@
 # limitations under the License.
 from __future__ import with_statement
 __all__ = ["WebDriver"]
-from selenium.webdriver.remote.command import Command
-from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
+from selenium.remote.command import Command
+from selenium.remote.webdriver import WebDriver as RemoteWebDriver
 from driver import ChromeDriver
 
 

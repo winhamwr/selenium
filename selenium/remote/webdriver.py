@@ -20,8 +20,8 @@ from command import Command
 from webelement import WebElement
 from remote_connection import RemoteConnection
 from errorhandler import ErrorHandler
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.alert import Alert
+from selenium.common.by import By
+from selenium.common.alert import Alert
 
 class WebDriver(object):
     """Controls a browser by sending commands to a remote server.

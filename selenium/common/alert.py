@@ -13,7 +13,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-from selenium.webdriver.remote.command import Command
+from selenium.remote.command import Command
 
 
 class Alert(object):

@@ -17,10 +17,10 @@
 
 import base64
 import httplib
-from selenium.webdriver.common.exceptions import ErrorInResponseException
-from selenium.webdriver.remote.command import Command
-from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
-from selenium.webdriver.remote.webelement import WebElement
+from selenium.common.exceptions import ErrorInResponseException
+from selenium.remote.command import Command
+from selenium.remote.webdriver import WebDriver as RemoteWebDriver
+from selenium.remote.webelement import WebElement
 import urllib2
 from ctypes import *
 import socket
