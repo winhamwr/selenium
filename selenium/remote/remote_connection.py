@@ -16,11 +16,8 @@
 import logging
 import string
 import urllib2
-<<<<<<< HEAD:selenium/remote/remote_connection.py
 import base64
-=======
 import urlparse
->>>>>>> jlward/master:selenium/remote/remote_connection.py
 
 from command import Command
 import utils
