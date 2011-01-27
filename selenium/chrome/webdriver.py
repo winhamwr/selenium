@@ -13,23 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import with_statement
-
-from __future__ import with_statement
-
-__all__ = [ "WebDriver" ]
-
+__all__ = ["WebDriver"]
 from selenium.remote.command import Command
 from selenium.remote.webdriver import WebDriver as RemoteWebDriver
 from driver import ChromeDriver
 
-class WebDriver(RemoteWebDriver):
 
+class WebDriver(RemoteWebDriver):
     def __init__(self):
         RemoteWebDriver.__init__(self,
             command_executor=ChromeDriver(),
             browser_name='chrome', platform='ANY', version='',
             javascript_enabled=True)
-
+    
     def start_client(self):
         self.command_executor.start()
 
@@ -45,8 +41,9 @@ class WebDriver(RemoteWebDriver):
         with open(jpeg_file, "w") as fo:
             fo.write(image.decode("base64"))
 
+
 def _test():
-    wd = WebDriver()
+    wd = RemoteWebDriver.connect('*chrome')
     wd.get("http://www.google.com")
     print "Current URL: %s" % wd.get_current_url()
     print "2 + 2 = %s" % wd.execute_script("return 2 + 2;")

@@ -1,5 +1,7 @@
-# Copyright 2008-2009 WebDriver committers
-# Copyright 2008-2009 Google Inc.
+#!/usr/bin/python
+#
+# Copyright 2008-2010 WebDriver committers
+# Copyright 2008-2010 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

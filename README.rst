@@ -27,7 +27,4 @@ released selenium browser extensions as built by Maven at http://repo1.maven.org
 Current Status
 ===============
 
-* Firefox bindings work with selenium version 2.0.4a
-* Selenium Remote bindings work with selenium version 2.0.4a
-* Chrome bindings are in progress
-* Internet Explorer bindings are in progress
+* Selenium Remote bindings work with selenium version 2.0.5a

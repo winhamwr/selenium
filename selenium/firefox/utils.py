@@ -23,6 +23,7 @@ import tempfile
 import zipfile
 from selenium.common.exceptions import NoSuchElementException
 
+LOGGER = logging.getLogger(__name__)
 
 def handle_find_element_exception(ex):
     """Converts the exception into more concrete exception according to the
@@ -45,7 +46,7 @@ def unzip_to_temp_dir(zip_file_name):
         return None
 
     # Unzip the files into a temporary directory
-    logging.info("Extracting zipped file: %s" % zip_file_name)
+    LOGGER.info("Extracting zipped file: %s" % zip_file_name)
     tempdir = tempfile.mkdtemp()
 
     try:
@@ -58,7 +59,7 @@ def unzip_to_temp_dir(zip_file_name):
             dest = os.path.join(tempdir, name)
             if (name.endswith(os.path.sep) and not os.path.exists(dest)):
                 os.mkdir(dest)
-                logging.debug("Directory %s created." % dest)
+                LOGGER.debug("Directory %s created." % dest)
 
         # Copy files
         for zip_name in zf.namelist():
@@ -68,17 +69,17 @@ def unzip_to_temp_dir(zip_file_name):
             name = zip_name.replace("\\", os.path.sep).replace("/", os.path.sep)
             dest = os.path.join(tempdir, name)
             if not (name.endswith(os.path.sep)):
-                logging.debug("Copying file %s......" % dest)
+                LOGGER.debug("Copying file %s......" % dest)
                 outfile = open(dest, 'wb')
                 outfile.write(zf.read(zip_name))
                 outfile.close()
-                logging.debug("File %s copied." % dest)
+                LOGGER.debug("File %s copied." % dest)
 
-        logging.info("Unzipped file can be found at %s" % tempdir)
+        LOGGER.info("Unzipped file can be found at %s" % tempdir)
         return tempdir
 
     except IOError, err:
-        logging.error("Error in extracting webdriver.xpi: %s" % err)
+        LOGGER.error("Error in extracting webdriver.xpi: %s" % err)
         return None
 
 
@@ -108,22 +109,27 @@ def _default_windows_location():
 
 def get_firefox_start_cmd():
     """Return the command to start firefox."""
-
+    start_cmd = ""
     if platform.system() == "Darwin":
         start_cmd = ("/Applications/Firefox.app/Contents/MacOS/firefox-bin")
     elif platform.system() == "Windows":
         start_cmd = _find_exe_in_registry() or _default_windows_location()
     else:
         # Maybe iceweasel (Debian) is another candidate...
-        for ffname in ["firefox2", "firefox", "firefox-3.0"]:
-            logging.debug("Searching for '%s'...", ffname)
-            process = Popen(["which", ffname], stdout=PIPE)
-            cmd = process.communicate()[0].strip()
-            if cmd != "":
-                logging.debug("Using %s", cmd)
-                start_cmd = cmd
+        for ffname in ["firefox2", "firefox", "firefox-3.0", "firefox-4.0"]:
+            LOGGER.debug("Searching for '%s'...", ffname)
+            start_cmd = which(ffname)
+            if start_cmd is not None:
                 break
     return start_cmd
+
+def which(fname):
+    """Returns the fully qualified path by searching Path of the given name"""
+    for pe in os.environ['PATH'].split(os.pathsep):
+        checkname = os.path.join(pe, fname)
+        if os.access(checkname, os.X_OK):
+            return checkname
+    return None
 
 def get_firefox_app_data_dir():
     """Return the path to the firefox application data."""
@@ -146,5 +152,5 @@ def get_firefox_app_data_dir():
 
         app_data_dir = os.path.join(home, ".mozilla", "firefox")
 
-    logging.info("Application data is found at %s" % app_data_dir)
+    LOGGER.info("Application data is found at %s" % app_data_dir)
     return app_data_dir

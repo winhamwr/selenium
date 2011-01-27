@@ -15,10 +15,13 @@
 
 """The WebDriver implementation."""
 
+import base64
 from command import Command
 from webelement import WebElement
 from remote_connection import RemoteConnection
 from errorhandler import ErrorHandler
+from selenium.common.by import By
+from selenium.common.alert import Alert
 
 class WebDriver(object):
     """Controls a browser by sending commands to a remote server.
@@ -102,7 +105,7 @@ class WebDriver(object):
           platform: Which platform to request the browser on.
           javascript_enabled: Whether the new session should support JavaScript.
         """
-        response =  self._execute(Command.NEW_SESSION, {
+        response =  self.execute(Command.NEW_SESSION, {
             'desiredCapabilities': {
                 'browserName': browser_name,
                 'platform': platform or 'ANY',
@@ -137,7 +140,7 @@ class WebDriver(object):
         else:
             return value
 
-    def _execute(self, driver_command, params=None):
+    def execute(self, driver_command, params=None):
         """Sends a command to be executed by a command.CommandExecutor.
 
         Args:
@@ -165,64 +168,77 @@ class WebDriver(object):
 
     def get(self, url):
         """Loads a web page in the current browser."""
-        self._execute(Command.GET, {'url': url})
+        self.execute(Command.GET, {'url': url})
 
-    def get_title(self):
+    @property
+    def title(self):
         """Gets the title of the current page."""
-        resp = self._execute(Command.GET_TITLE)
-        return resp['value']
+        resp = self.execute(Command.GET_TITLE)
+        return resp['value'] if resp['value'] is not None else ""
 
     def find_element_by_id(self, id_):
         """Finds element by id."""
-        return self._find_element_by("id", id_)
+        return self.find_element(by=By.ID, value=id_)
+
+    def find_elements_by_id(self, id_):
+        """Finds element by id."""
+        return self.find_elements(by=By.ID, value=id_)
 
     def find_elements_by_xpath(self, xpath):
         """Finds multiple elements by xpath."""
-        return self._find_elements_by("xpath", xpath)
+        return self.find_elements(by=By.XPATH, value=xpath)
 
     def find_element_by_xpath(self, xpath):
         """Finds an element by xpath."""
-        return self._find_element_by("xpath", xpath)
+        return self.find_element(by=By.XPATH, value=xpath)
 
     def find_element_by_link_text(self, link_text):
         """Finds an element by its link text."""
-        return self._find_element_by("link text", link_text)
-
-    def find_element_by_partial_link_text(self, link_text):
-        """Finds an element by a partial match of its link text."""
-        return self._find_element_by("partial link text", link_text)
+        return self.find_element(by=By.LINK_TEXT, value=link_text)
 
     def find_elements_by_link_text(self, link_text):
         """Finds elements by their link text."""
-        return self._find_elements_by("link text", link_text)
+        return self.find_elements(by=By.LINK_TEXT, value=link_text)
+
+    def find_element_by_partial_link_text(self, link_text):
+        """Finds an element by a partial match of its link text."""
+        return self.find_element(by=By.PARTIAL_LINK_TEXT, value=link_text)
 
     def find_elements_by_partial_link_text(self, link_text):
         """Finds elements by a partial match of their link text."""
-        return self._find_elements_by("partial link text", link_text)
+        return self.find_elements(by=By.PARTIAL_LINK_TEXT, value=link_text)
 
     def find_element_by_name(self, name):
         """Finds an element by its name."""
-        return self._find_element_by("name", name)
+        return self.find_element(by=By.NAME, value=name)
 
     def find_elements_by_name(self, name):
         """Finds elements by their name."""
-        return self._find_elements_by("name", name)
+        return self.find_elements(by=By.NAME, value=name)
 
     def find_element_by_tag_name(self, name):
         """Finds an element by its tag name."""
-        return self._find_element_by("tag name", name)
+        return self.find_element(by=By.TAG_NAME, value=name)
 
     def find_elements_by_tag_name(self, name):
         """Finds elements by their tag name."""
-        return self._find_elements_by("tag name", name)
+        return self.find_elements(by=By.TAG_NAME, value=name)
 
     def find_element_by_class_name(self, name):
         """Finds an element by their class name."""
-        return self._find_element_by("class name", name)
+        return self.find_element(by=By.CLASS_NAME, value=name)
 
     def find_elements_by_class_name(self, name):
         """Finds elements by their class name."""
-        return self._find_elements_by("class name", name)
+        return self.find_elements(by=By.CLASS_NAME, value=name)
+
+    def find_element_by_css_selector(self, css_selector):
+        """Find and return an element by CSS selector."""
+        return self.find_element(by=By.CSS_SELECTOR, value=css_selector)
+    
+    def find_elements_by_css_selector(self, css_selector):
+        """Find and return list of multiple elements by CSS selector."""
+        return self.find_elements(by=By.CSS_SELECTOR, value=css_selector)
 
     def execute_script(self, script, *args):
         if len(args) == 1:
@@ -230,58 +246,84 @@ class WebDriver(object):
         else:
             converted_args = list(args)
         converted_args = list(args)
-        return self._execute(
+        return self.execute(
             Command.EXECUTE_SCRIPT,
             {'script': script, 'args':converted_args})['value']
 
-    def get_current_url(self):
+    def execute_async_script(self, script, *args):
+        if len(args) == 1:
+            converted_args = args[0]
+        else:
+            converted_args = list(args)
+        converted_args = list(args)
+        return self.execute(
+            Command.EXECUTE_ASYNC_SCRIPT,
+            {'script': script, 'args':converted_args})['value']
+
+    @property
+    def current_url(self):
         """Gets the current url."""
-        return self._execute(Command.GET_CURRENT_URL)['value']
+        return self.execute(Command.GET_CURRENT_URL)['value']
 
     def get_page_source(self):
         """Gets the page source."""
-        return self._execute(Command.GET_PAGE_SOURCE)['value']
+        return self.execute(Command.GET_PAGE_SOURCE)['value']
 
     def close(self):
         """Closes the current window."""
-        self._execute(Command.CLOSE)
+        self.execute(Command.CLOSE)
 
     def quit(self):
         """Quits the driver and close every associated window."""
         try:
-            self._execute(Command.QUIT)
+            self.execute(Command.QUIT)
         finally:
             self.stop_client()
         
     def get_current_window_handle(self):
-        return self._execute(Command.GET_CURRENT_WINDOW_HANDLE)['value']
+        return self.execute(Command.GET_CURRENT_WINDOW_HANDLE)['value']
 
     def get_window_handles(self):
-        return self._execute(Command.GET_WINDOW_HANDLES)['value']
-        
+        return self.execute(Command.GET_WINDOW_HANDLES)['value']
+    
+    #Target Locators
     def switch_to_active_element(self):
         """Returns the element with focus, or BODY if nothing has focus."""
-        return self._execute(Command.GET_ACTIVE_ELEMENT)['value']
+        return self.execute(Command.GET_ACTIVE_ELEMENT)['value']
 
     def switch_to_window(self, window_name):
         """Switches focus to a window."""
-        self._execute(Command.SWITCH_TO_WINDOW, {'name': window_name})
+        self.execute(Command.SWITCH_TO_WINDOW, {'name': window_name})
 
     def switch_to_frame(self, index_or_name):
         """Switches focus to a frame by index or name."""
-        self._execute(Command.SWITCH_TO_FRAME, {'id': index_or_name})
+        self.execute(Command.SWITCH_TO_FRAME, {'id': index_or_name})
 
+    def switch_to_default_content(self):
+        """Switch to the default frame"""
+        self.execute(Command.SWITCH_TO_FRAME, {'id': None})
+
+    def switch_to_alert(self):
+        """ Switch to the alert on the page """
+        return Alert(self) 
+    
+    #Navigation 
     def back(self):
         """Goes back in browser history."""
-        self._execute(Command.GO_BACK)
+        self.execute(Command.GO_BACK)
 
     def forward(self):
         """Goes forward in browser history."""
-        self._execute(Command.GO_FORWARD)
+        self.execute(Command.GO_FORWARD)
+
+    def refresh(self):
+        """Refreshes the current page."""
+        self.execute(Command.REFRESH)
+
     # Options
     def get_cookies(self):
         """Gets all the cookies. Return a set of dicts."""
-        return self._execute(Command.GET_ALL_COOKIES)['value']
+        return self.execute(Command.GET_ALL_COOKIES)['value']
         
     def get_cookie(self, name):
         """Get a single cookie.  Returns the desired cookie dict or None."""
@@ -293,26 +335,56 @@ class WebDriver(object):
 
     def delete_cookie(self, name):
         """Delete a cookie with the given name."""
-        self._execute(Command.DELETE_COOKIE, {'name': name})
+        self.execute(Command.DELETE_COOKIE, {'name': name})
 
     def delete_all_cookies(self):
         """Delete all the cookies."""
-        self._execute(Command.DELETE_ALL_COOKIES)
+        self.execute(Command.DELETE_ALL_COOKIES)
 
     def add_cookie(self, cookie_dict):
-        self._execute(Command.ADD_COOKIE, {'cookie': cookie_dict})
+        self.execute(Command.ADD_COOKIE, {'cookie': cookie_dict})
+    
+    # Timeouts
+    def implicitly_wait(self, time_to_wait):
+        """Get the driver to poll for the element """
+        self.execute(Command.IMPLICIT_WAIT, {'ms': time_to_wait*1000})
 
-    def _find_element_by(self, by, value):
-        return self._execute(Command.FIND_ELEMENT,
+    def set_script_timeout(self, time_to_wait):
+        """Set the timeout that the script should wait before throwing an
+           error"""
+        self.execute(Command.SET_SCRIPT_TIMEOUT, {'ms': time_to_wait*1000})
+
+    def find_element(self, by=By.ID, value=None):
+        return self.execute(Command.FIND_ELEMENT,
                              {'using': by, 'value': value})['value']
 
-    def _find_elements_by(self, by, value):
-        return self._execute(Command.FIND_ELEMENTS,
+    def find_elements(self, by=By.ID, value=None):
+        return self.execute(Command.FIND_ELEMENTS,
                              {'using': by, 'value': value})['value']
 
+    def get_screenshot_as_file(self, filename):
+        """Gets the screenshot of the current window. Returns False if there is 
+        any IOError, else returns True. Use full paths in your filename."""
+        png = self.execute(Command.SCREENSHOT)['value']
+        try:
+            f = open(filename, 'w')
+            f.write(base64.decodestring(png))
+            f.close()
+        except IOError:
+            return False
 
-def connect(name, version="", server="http://localhost:4444", platform=None,
-            javascript_enabled=True, path="/wd/hub"):
+        finally:
+            del png
+
+        return True
+
+    def get_screenshot_as_base64(self):
+        """Gets the screenshot of the current window as a base64 encoded string which 
+        is useful in embedded images in HTML."""
+        return self.execute(Command.SCREENSHOT)['value']
+
+
+def connect(driver_name, server_address, path, browser_name, version, platform, javascript_enabled):
     """Convenience function to connect to a server
        Args:
            name - A string indicating which browser to request a new
@@ -330,9 +402,6 @@ def connect(name, version="", server="http://localhost:4444", platform=None,
                JavaScript.  Defaults to True.
            path - path in server url. Defaults to "/wd/hub/"
     """
-    if not path.startswith("/"):
-        path = "/" + path
-    url = "%s%s" % (server, path)
-    wd = WebDriver(url, name, platform, version, javascript_enabled)
-
+    url = "%s%s" % (server_address, path)
+    wd = WebDriver(url, browser_name, platform, version, javascript_enabled)
     return wd

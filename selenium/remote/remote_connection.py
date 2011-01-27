@@ -16,12 +16,17 @@
 import logging
 import string
 import urllib2
+<<<<<<< HEAD:selenium/remote/remote_connection.py
 import base64
+=======
+import urlparse
+>>>>>>> jlward/master:selenium/remote/remote_connection.py
 
 from command import Command
 import utils
 import re
 
+LOGGER = logging.getLogger(__name__)
 
 class Request(urllib2.Request):
     """Extends the urllib2.Request to support all HTTP request types."""
@@ -189,8 +194,22 @@ class RemoteConnection(object):
             Command.GET_SPEED: ('GET', '/session/$sessionId/speed'),
             Command.SET_SPEED: ('POST', '/session/$sessionId/speed'),
             Command.GET_ELEMENT_VALUE_OF_CSS_PROPERTY:
-                ('GET',  '/session/$sessionId/element/$id/css/$propertyName')
-        }
+                ('GET',  '/session/$sessionId/element/$id/css/$propertyName'),
+            Command.IMPLICIT_WAIT: 
+                ('POST', '/session/$sessionId/timeouts/implicit_wait'),
+            Command.EXECUTE_ASYNC_SCRIPT: ('POST','/session/$sessionId/execute_async'),
+            Command.SET_SCRIPT_TIMEOUT:
+                ('POST', '/session/$sessionId/timeouts/async_script'),
+            Command.GET_ELEMENT_VALUE_OF_CSS_PROPERTY:
+                ('GET', '/session/$sessionId/element/$id/css/$propertyName'),
+            Command.DISMISS_ALERT:
+                ('POST', '/session/$sessionId/dismiss_alert'),
+            Command.ACCEPT_ALERT:
+                ('POST', '/session/$sessionId/accept_alert'),
+            Command.SET_ALERT_VALUE:
+                ('POST', '/session/$sessionId/alert_text'),
+            Command.GET_ALERT_TEXT:
+                ('GET', '/session/$sessionId/alert_text')}
 
     def execute(self, command, params):
         """Send a command to the remote server.
@@ -221,35 +240,52 @@ class RemoteConnection(object):
         Returns:
           A dictionary with the server's parsed JSON response.
         """
-        logging.debug('%s %s %s' % (method, url, data))
+        LOGGER.debug('%s %s %s' % (method, url, data))
 
-        regex = r'http://(.*):(.*)@(.*)'
-        if len(re.findall(regex, url)):
-            username, password, path = re.findall(regex, url)[0]
-            request = Request('http://%s' % path, data=data, method=method)
-
-            auth = base64.encodestring('%s:%s' % (username, password))[:-1]
-            request.add_header('Authorization', 'Basic %s' % auth)
+        parsed_url = urlparse.urlparse(url)
+        auth = None
+        password_manager = None
+        if parsed_url.username:
+            netloc = parsed_url.hostname
+            if parsed_url.port:
+                netloc += ":%s" % parsed_url.port
+            cleaned_url = urlparse.urlunparse((parsed_url.scheme, netloc, parsed_url.path,
+                parsed_url.params, parsed_url.query, parsed_url.fragment))
+            password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_manager.add_password(None, "%s://%s" % (parsed_url.scheme, netloc), parsed_url.username, parsed_url.password)
+            request = Request(cleaned_url, data=data, method=method)
         else:
             request = Request(url, data=data, method=method)
+
         request.add_header('Accept', 'application/json')
-        opener = urllib2.build_opener(urllib2.HTTPRedirectHandler(),
-                                      urllib2.HTTPBasicAuthHandler(),
-                                      HttpErrorHandler()
-                                      )
+
+        if password_manager:
+            opener = urllib2.build_opener(urllib2.HTTPRedirectHandler(),
+                                          HttpErrorHandler(),
+                                          urllib2.HTTPBasicAuthHandler(password_manager))
+        else:
+            opener = urllib2.build_opener(urllib2.HTTPRedirectHandler(),
+                                          HttpErrorHandler())
+
         response = opener.open(request)
         try:
             if response.code > 399 and response.code < 500:
                 return {'status': response.code, 'value': response.read()}
             body = response.read().replace('\x00', '').strip()
-            if body:
+            content_type = response.info().getheader('Content-Type') or []
+            if 'application/json' in content_type:
                 data = utils.load_json(body.strip())
                 assert type(data) is dict, (
                     'Invalid server response body: %s' % body)
                 assert 'status' in data, (
                     'Invalid server response; no status: %s' % body)
-                assert 'value' in data, (
-                    'Invalid server response; no value: %s' % body)
+                # Some of the drivers incorrectly return a response
+                # with no 'value' field when they should return null.
+                if 'value' not in data:
+                    data['value'] = None
+                return data
+            elif 'image/png' in content_type:
+                data = {'status': 0, 'value': body.strip()}
                 return data
         finally:
             response.close()

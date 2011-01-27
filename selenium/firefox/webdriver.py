@@ -15,16 +15,15 @@
 
 import base64
 import httplib
-import urllib2
-
 from selenium.common.exceptions import ErrorInResponseException
 from selenium.remote.command import Command
 from selenium.remote.webdriver import WebDriver as RemoteWebDriver
-
-from selenium.firefox.webelement import WebElement
+from selenium.remote.webelement import WebElement
 from selenium.firefox.firefoxlauncher import FirefoxLauncher
 from selenium.firefox.firefox_profile import FirefoxProfile
 from selenium.firefox.extensionconnection import ExtensionConnection
+import urllib2
+
 
 class WebDriver(RemoteWebDriver):
     """The main interface to use for testing,
@@ -54,7 +53,7 @@ class WebDriver(RemoteWebDriver):
 
     def _execute(self, command, params=None):
         try:
-            return RemoteWebDriver._execute(self, command, params)
+            return RemoteWebDriver.execute(self, command, params)
         except ErrorInResponseException, e:
             # Legacy behavior: calling close() multiple times should not raise
             # an error
@@ -65,7 +64,21 @@ class WebDriver(RemoteWebDriver):
             # an error
             if command != Command.QUIT:
                 raise e
+    
+    def set_preference(self, name, value):
+        """
+        Set a preference in about:config via user.js. Format is name, value.
+        For example, set_preference("app.update.auto", "false")
+        """
+        FFProfile = FirefoxProfile()
+        pref_dict = FFProfile.prefs
+        pref_dict[name] = value
+        FFProfile._update_user_preference(pref_dict)
 
+    def get_preferences(self):
+        """View the current list of preferences set in about:config."""
+        FFProfile = FirefoxProfile()
+        return FFProfile.prefs
 
     def create_web_element(self, element_id):
         """Override from RemoteWebDriver to use firefox.WebElement."""
@@ -81,10 +94,18 @@ class WebDriver(RemoteWebDriver):
             pass
         self.browser.kill()
 
-    def save_screenshot(self, png_file):
-        """Saves a screenshot of the current page into the given
-        file."""
-        png_data = self._execute(Command.SCREENSHOT)['value']
-        fp = open(png_file, 'wb')
-        fp.write(base64.decodestring(png_data))
-        fp.close()
+    def save_screenshot(self, filename):
+        """
+        Gets the screenshot of the current window. Returns False if there is
+        any IOError, else returns True. Use full paths in your filename.
+        """
+        png = self._execute(Command.SCREENSHOT)['value']
+        try:
+            f = open(filename, 'w')
+            f.write(base64.decodestring(png))
+            f.close()
+        except IOError:
+            return False
+        finally:
+            del png
+        return True
