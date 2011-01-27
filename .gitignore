@@ -19,3 +19,4 @@ iphone/build/
 /build/
 android/client/bin/
 android/server/bin/
+*.pyc
